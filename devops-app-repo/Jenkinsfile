@@ -32,25 +32,26 @@ pipeline {
         }
 
         stage('Update GitOps Repo') {
-            steps {
-                withCredentials([string(credentialsId: 'github-pat', variable: 'GITHUB_TOKEN')]) {
-                    dir('devops-gitops-repo') {
-                        sh '''
-                        git checkout main
-                        git pull --rebase origin main
-        
-                        sed -i "s|IMAGE_TAG|'''${IMAGE_TAG}'''|g" k8s-manifests/deployment.yaml
-        
-                        git config user.name "jenkins"
-                        git config user.email "jenkins@devops.com"
-                        git add .
-                        git commit -m "Update image to ${IMAGE_TAG}" || echo "No changes"
-                        git push origin main
-                        '''
-                    }
-                }
+    steps {
+        withCredentials([string(credentialsId: 'github-pat', variable: 'GITHUB_TOKEN')]) {
+            dir('devops-gitops-repo') {
+                sh """
+                git checkout main
+                git pull --rebase origin main
+
+                sed -i "s|IMAGE_TAG|${IMAGE_TAG}|g" k8s-manifests/deployment.yaml
+
+                git config user.name "jenkins"
+                git config user.email "jenkins@devops.com"
+                git add .
+                git commit -m "Update image to ${IMAGE_TAG}" || echo "No changes"
+                git push origin main
+                """
             }
         }
+    }
+}
+
 
     }
 }
