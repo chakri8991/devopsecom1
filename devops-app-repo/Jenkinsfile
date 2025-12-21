@@ -4,22 +4,25 @@ pipeline {
     environment {
         DOCKER_IMAGE = "yourdockerhub/devops-app"
         GITOPS_REPO  = "https://github.com/yourname/devops-gitops-repo.git"
+        IMAGE_TAG   = "${BUILD_NUMBER}"
+    }
+
+    triggers {
+        githubPush()
     }
 
     stages {
 
         stage('Clone App Repo') {
             steps {
-                git 'https://github.com/yourname/devops-app-repo.git'
+                git branch: 'main',
+                    url: 'https://github.com/yourname/devops-app-repo.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    IMAGE_TAG = "${BUILD_NUMBER}"
-                }
-                sh "docker build -t $DOCKER_IMAGE:$IMAGE_TAG ."
+                sh "docker build -t ${DOCKER_IMAGE}:${IMAGE_TAG} ."
             }
         }
 
@@ -27,8 +30,8 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'dockerhub-pass', variable: 'PASS')]) {
                     sh """
-                    docker login -u yourdockerhub -p $PASS
-                    docker push $DOCKER_IMAGE:$IMAGE_TAG
+                    echo \$PASS | docker login -u yourdockerhub --password-stdin
+                    docker push ${DOCKER_IMAGE}:${IMAGE_TAG}
                     """
                 }
             }
@@ -36,17 +39,19 @@ pipeline {
 
         stage('Update GitOps Repo') {
             steps {
-                sh '''
-                rm -rf gitops
-                git clone ${GITOPS_REPO} gitops
-                cd gitops
-                sed -i "s|IMAGE_TAG|'"$IMAGE_TAG"'|g" k8s-manifests/deployment.yaml
-                git config user.name "jenkins"
-                git config user.email "jenkins@devops.com"
-                git add .
-                git commit -m "Update image to ${IMAGE_TAG}"
-                git push origin main
-                '''
+                withCredentials([string(credentialsId: 'github-pat', variable: 'GITHUB_TOKEN')]) {
+                    sh '''
+                    rm -rf gitops
+                    git clone https://${GITHUB_TOKEN}@github.com/yourname/devops-gitops-repo.git gitops
+                    cd gitops
+                    sed -i "s|IMAGE_TAG|'"$IMAGE_TAG"'|g" k8s-manifests/deployment.yaml
+                    git config user.name "jenkins"
+                    git config user.email "jenkins@devops.com"
+                    git add .
+                    git commit -m "Update image to ${IMAGE_TAG}" || echo "No changes"
+                    git push origin main
+                    '''
+                }
             }
         }
     }
