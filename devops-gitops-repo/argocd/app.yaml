@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/chakri8991/devopsecom1.git
-    path: k8s-manifests
+    path: devops-gitops-repo/k8s-manifests
     targetRevision: main
   destination:
     server: https://kubernetes.default.svc
