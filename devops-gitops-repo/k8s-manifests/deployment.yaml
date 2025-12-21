@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: devops-container
-        image: chakri8991/imageecom:v1
+        image: chakri8991/imageecom:IMAGE_TAG
         ports:
         - containerPort: 80
