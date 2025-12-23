@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: devops-container
-        image: chakri8991/devopsecom:83
+        image: chakri8991/devopsecom:84
         imagePullPolicy: Always
         ports:
         - containerPort: 80
